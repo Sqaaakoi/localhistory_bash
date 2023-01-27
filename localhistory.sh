@@ -8,13 +8,27 @@
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Prompt command magic; NOT automatically injected. Required to be injected to $PROMPT_COMMAND to function correctly.
+
+
+# Prompt command magic
+# This is NOT automatically injected; you must run this script with "--prompt-command" to inject it.
+# This behaviour is intended so you can easily remove that argument from your .bashrc or similar so that you can override $PROMPT_COMMAND yourself.
+# Please note that this must be injected to $PROMPT_COMMAND for this entire script to function correctly.
 __localhistory_prompt_command() {
     # r/w history before running commands, helps with multiple shells
     history -a; history -n;
     $@
     __localhistory .
 }
+
+# Inject prompt command if "--prompt-command" is specified
+if [ "$1" == "--prompt-command" ]; then
+    __PROMPT_COMMAND() {
+        __localhistory_prompt_command
+        $@
+    }
+    export PROMPT_COMMAND="__PROMPT_COMMAND $PROMPT_COMMAND"
+fi
 
 # Local history per project
 # Default history file
@@ -142,27 +156,43 @@ lht() {
     fi
     if [ "$1" = "prompt_status" ]; then
         if [ "$__LOCALHISTORY_RECENTLY_UPDATED" = "true" ]; then
-            echo "$3$HISTFILE$4"
+            echo "$5$HISTFILE$6"
+            return 0
         fi
+        if [ "$__LOCALHISTORY_ENABLED" = "true" ]; then
+            if [ "$__LOCALHISTORY_ACTIVE" = "true" ]; then
+                echo "$2"
+                return 0
+            fi
+            echo "$3"
+            return 0
+        fi
+        echo "$4"
         return 0
     fi
     if [ "$1" = "help" ]; then
-        echo "lht: Local History Tool"
-        echo ""
-        echo "status"
-        echo "\tShows if local history is enabled, active, and the current history file"
-        echo "file"
-        echo "\tShows the current history file"
-        echo "enable"
-        echo "on"
-        echo "\tEnables local history"
-        echo "disable"
-        echo "off"
-        echo "\tDisables local history"
-        echo "create [git]"
-        echo "Creates a local history file and optionally adds it to .git/info/exclude"
-        echo "prompt_status [symbol] [path_prefix] [path_suffix]"
-        echo "\tShows [symbol] if active, the new history file path surrounded by [path_prefix] and [path_suffix] if recently updated"
+        echo -e "\033[96mlht: Local History Tool\033[00m"
+        echo -e ""
+        echo -e "\033[36mlocal history filename: \033[00m\033[94m$__LOCALHISTORY_FILENAME\033[00m"
+        echo -e ""
+        echo -e "\033[39mlht\033[00m"
+        echo -e "\033[39mlht status\033[00m"
+        echo -e "\033[37m - Shows if local history is enabled, active, and the current history file\033[00m"
+        echo -e "\033[39mlht file\033[00m"
+        echo -e "\033[37m - Shows the current history file\033[00m"
+        echo -e "\033[39mlht enable\033[00m"
+        echo -e "\033[39mlht on\033[00m"
+        echo -e "\033[37m - Enables local history\033[00m"
+        echo -e "\033[39mlht disable\033[00m"
+        echo -e "\033[39mlht off\033[00m"
+        echo -e "\033[37m - Disables local history\033[00m"
+        echo -e "\033[39mlht create (git|gitlocal)\033[00m"
+        echo -e "\033[37m - Creates a local history file and optionally adds it to .gitignore (git) or .git/info/exclude (gitlocal)\033[00m"
+        echo -e "\033[39mlht prompt_status [active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
+        echo -e "\033[37m - Shows [active] if enabled and active, [inactive] if local history is enabled and inactive, [disabled] if local history is disabled, and the new history file path surrounded by [path_prefix] and [path_suffix] if active and recently updated\033[00m"
+        echo -e "\033[39mlht help\033[00m"
+        echo -e "\033[39mlht --help\033[00m"
+        echo -e "\033[37m - Shows this help message\033[00m"
         return 0
     fi
 
