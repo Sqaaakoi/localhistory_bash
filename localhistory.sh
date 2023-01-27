@@ -180,6 +180,7 @@ lht() {
     fi
     if [ "$1" = "help" ]; then
         echo -e "\033[96mlht: Local History Tool\033[00m"
+        echo -e "\033[36mVersion 1.2\033[00m"
         echo -e ""
         echo -e "\033[94mRequired arguments are displayed as \033[32m[required]\033[00m"
         echo -e "\033[94mOptional / multi-choice arguments are displayed as \033[32m(option|alternate-option)\033[00m"
