@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Local history for Bash
-# Version 1.2
+# Version 1.3
 # Use `lht help` for help and more information
 
 # Copyright (c) 2023 Sqaaakoi
@@ -180,7 +180,7 @@ lht() {
     fi
     if [ "$1" = "help" ]; then
         echo -e "\033[96mlht: Local History Tool\033[00m"
-        echo -e "\033[36mVersion 1.2\033[00m"
+        echo -e "\033[36mVersion 1.3\033[00m"
         echo -e ""
         echo -e "\033[94mRequired arguments are displayed as \033[32m[required]\033[00m"
         echo -e "\033[94mOptional / multi-choice arguments are displayed as \033[32m(option|alternate-option)\033[00m"
@@ -199,9 +199,9 @@ lht() {
         echo -e "\033[36mlht off\033[00m"
         echo -e "\033[37m - Disables local history for this session\033[00m"
         echo -e "\033[36mlht create \033[32m(git|gitlocal)\033[00m"
-        echo -e "\033[37m - Creates a local history file and optionally adds it to .gitignore (git) or .git/info/exclude (gitlocal)\033[00m"
+        echo -e "\033[37m - Creates a local history file and optionally adds it to .gitignore \033[32m(git)\033[37m or .git/info/exclude \033[32m(gitlocal)\033[00m"
         echo -e "\033[36mlht prompt_status \033[32m[active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
-        echo -e "\033[37m - Shows [active] if enabled and active, [inactive] if local history is enabled and inactive, [disabled] if local history is disabled, and the new history file path surrounded by [path_prefix] and [path_suffix] if active and recently updated\033[00m"
+        echo -e "\033[37m - Shows \033[32m[active]\033[37m if enabled and active, \033[32m[inactive]\033[37m if local history is enabled and inactive, \033[32m[disabled]\033[37m if local history is disabled, and the new history file path surrounded by \033[32m[path_prefix]\033[37m and \033[32m[path_suffix]\033[37m if active and recently updated\033[00m"
         echo -e "\033[36mlht help\033[00m"
         echo -e "\033[36mlht --help\033[00m"
         echo -e "\033[37m - Shows this help message\033[00m"
