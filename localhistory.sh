@@ -93,13 +93,13 @@ __localhistory_realpath() {
 lht() {
     if [ "$1" = "status" ] || [ -z "$1" ]; then
         if [ "$__LOCALHISTORY_ENABLED" == "false" ]; then
-            echo -e "\033[96mLocal history is \033[36smdisabled\033[00m"
+            echo -e "\033[96mLocal history is \033[91mdisabled\033[00m"
             lht filename
             lht file
             return 2
         else
             if [ "$__LOCALHISTORY_ACTIVE" = "false" ]; then
-                echo -e "\033[96mLocal history is \033[90minactive\033[00m"
+                echo -e "\033[96mLocal history is \033[36minactive\033[00m"
                 lht filename
                 lht file
                 return 1
@@ -181,6 +181,9 @@ lht() {
     if [ "$1" = "help" ]; then
         echo -e "\033[96mlht: Local History Tool\033[00m"
         echo -e ""
+        echo -e "\033[94mRequired arguments are displayed as \033[32m[required]\033[00m"
+        echo -e "\033[94mOptional / multi-choice arguments are displayed as \033[32m(option|alternate-option)\033[00m"
+        echo -e ""
         echo -e "\033[36mlht\033[00m"
         echo -e "\033[36mlht status\033[00m"
         echo -e "\033[37m - Shows if local history is enabled, active, and the current history file\033[00m"
@@ -194,9 +197,9 @@ lht() {
         echo -e "\033[36mlht disable\033[00m"
         echo -e "\033[36mlht off\033[00m"
         echo -e "\033[37m - Disables local history\033[00m"
-        echo -e "\033[36mlht create (git|gitlocal)\033[00m"
+        echo -e "\033[36mlht create \033[32m(git|gitlocal)\033[00m"
         echo -e "\033[37m - Creates a local history file and optionally adds it to .gitignore (git) or .git/info/exclude (gitlocal)\033[00m"
-        echo -e "\033[36mlht prompt_status [active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
+        echo -e "\033[36mlht prompt_status \033[32m[active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
         echo -e "\033[37m - Shows [active] if enabled and active, [inactive] if local history is enabled and inactive, [disabled] if local history is disabled, and the new history file path surrounded by [path_prefix] and [path_suffix] if active and recently updated\033[00m"
         echo -e "\033[36mlht help\033[00m"
         echo -e "\033[36mlht --help\033[00m"

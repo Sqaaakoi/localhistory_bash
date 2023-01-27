@@ -3,7 +3,6 @@
 # Installation
 Run `./install.sh`
 
-
 # Why?
 Shell histories can get cluttered easily, and this helps by letting you automatically switch to history files in the current project that you are working on. 
 
