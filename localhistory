@@ -1,57 +1,171 @@
+#!/bin/bash
+
+# Local history for Bash
+# Version 1.1
+
+# Copyright © 2023 Sqaaakoi
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Prompt command magic; NOT automatically injected. Required to be injected to $PROMPT_COMMAND to function correctly.
+__localhistory_prompt_command() {
+    # r/w history before running commands, helps with multiple shells
+    history -a; history -n;
+    $@
+    __localhistory .
+}
+
 # Local history per project
 # Default history file
-export __LOCALHISTORY_DEFAULT="$HOME/.bash_history"
-# Current history file
-export __LOCALHISTORY="$__LOCALHISTORY_DEFAULT"
-# Variable displaying path of new history file after changing directory or updating file
-export __LOCALHISTORY_DISPLAY_PATH=""
-# Symbol shown if the local history is active
-export __LOCALHISTORY_ACTIVE=""
-# Status that is displayed
-export __LOCALHISTORY_STATUS=""
+export __LOCALHISTORY_DEFAULT="$HISTFILE"
+# File name for local history log
+export __LOCALHISTORY_FILENAME=".local_bash_history"
+# Current status of local history being enabled
+export __LOCALHISTORY_ENABLED="true"
+# Set to true if the local history has just been updated
+export __LOCALHISTORY_RECENTLY_UPDATED="false"
+# If the local history is active
+export __LOCALHISTORY_ACTIVE="false"
 # Find history file
 __localhistory() {
-    local __LOCALHISTORY_TRAVERSAL="$(__localhistory_realpath "$1")"
-    # Is there a writable bash history file here?
-    if [ -w "$(__localhistory_realpath "$__LOCALHISTORY_TRAVERSAL/.local_bash_history")" ]; then
-        # Only set and display if new history file is found
-        __localhistory_update "$__LOCALHISTORY_TRAVERSAL/.local_bash_history"
-    elif [ "$__LOCALHISTORY_TRAVERSAL" != "/" ]; then
-        # Try traversing up to look again if we aren't already in root
-        __localhistory "$__LOCALHISTORY_TRAVERSAL/.."
-    else
-        # Fallback to home directory
-        __localhistory_update "$__LOCALHISTORY_DEFAULT"
+    if [ "$__LOCALHISTORY_ENABLED" = "false" ]; then
+        if [ "$__LOCALHISTORY_RECENTLY_UPDATED" = "true" ]; then
+            __LOCALHISTORY_RECENTLY_UPDATED="false"
+            HISTFILE="$__LOCALHISTORY_DEFAULT"
+            return
+        fi
+    fi
+    if [ "$__LOCALHISTORY_ENABLED" = "true" ]; then
+        local __LOCALHISTORY_TRAVERSAL="$(__localhistory_realpath "$1")"
+        # Is there a writable bash history file here?
+        if [ -w "$(__localhistory_realpath "$__LOCALHISTORY_TRAVERSAL/$__LOCALHISTORY_FILENAME")" ]; then
+            # Only set and display if new history file is found
+            __localhistory_update "$__LOCALHISTORY_TRAVERSAL/$__LOCALHISTORY_FILENAME"
+            export __LOCALHISTORY_ACTIVE="true"
+        elif [ "$__LOCALHISTORY_TRAVERSAL" != "/" ]; then
+            # Try traversing up to look again if we aren't already in root
+            __localhistory "$__LOCALHISTORY_TRAVERSAL/.."
+        else
+            # Fallback to home directory
+            __localhistory_update "$__LOCALHISTORY_DEFAULT"
+            export __LOCALHISTORY_ACTIVE="false"
+        fi
     fi
 }
 # Update the history file
 __localhistory_update() {
     # $1 is the file
-    if [ "$__LOCALHISTORY" != "$(__localhistory_realpath "$1")" ]; then
+    if [ "$HISTFILE" != "$(__localhistory_realpath "$1")" ]; then
         # Write last history file
         history -a
         # Clear loaded history so history can be replaced
         history -c
-        __LOCALHISTORY="$(__localhistory_realpath "$1")"
-        HISTFILE="$__LOCALHISTORY"
-        export __LOCALHISTORY_DISPLAY_PATH="$1 "
+        HISTFILE="$(__localhistory_realpath "$1")"
+        export __LOCALHISTORY_RECENTLY_UPDATED="true"
         # Read history
         history -r;
     else
-        export __LOCALHISTORY_DISPLAY_PATH=""
+        export __LOCALHISTORY_RECENTLY_UPDATED="false"
     fi
-    # Active symbol
-    if [ "$__LOCALHISTORY" != "$__LOCALHISTORY_DEFAULT" ]; then
-        export __LOCALHISTORY_ACTIVE="% "
-    fi
-    # Disable active symbol if path shown
-    if [ "$__LOCALHISTORY_DISPLAY_PATH" != "" ]; then
-        export __LOCALHISTORY_ACTIVE=""
-    fi
-    # Combination of those
-    export __LOCALHISTORY_STATUS="$__LOCALHISTORY_DISPLAY_PATH$__LOCALHISTORY_ACTIVE"
 }
 # Used for paths with spaces in name
 __localhistory_realpath() {
     realpath "$@"
+}
+
+# Local history management command
+lht() {
+    if [ "$1" = "status" ] || [ -z "$1" ]; then
+        if [ "$__LOCALHISTORY_ENABLED" == "false" ]; then
+            echo "Local history is disabled"
+            lht file
+            return 2
+        else
+            if [ "$__LOCALHISTORY_ACTIVE" = "false" ]; then
+                echo "Local history is inactive"
+                lht file
+                return 1
+            else 
+                echo "Local history is active"
+                lht file
+                return 0
+            fi
+        fi
+    fi
+    if [ "$1" = "file" ]; then
+        echo "History file" "$HISTFILE"
+        return 0
+    fi
+    if [ "$1" = "enable" ] || [ "$1" = "on" ]; then
+        export __LOCALHISTORY_ENABLED="true"
+        __localhistory .
+        export __LOCALHISTORY_RECENTLY_UPDATED="false"
+        echo "Enabled local history"
+        lht file
+        return 0
+    fi
+    if [ "$1" = "disable" ] || [ "$1" = "off" ]; then
+        export __LOCALHISTORY_ENABLED="false"
+        export __LOCALHISTORY_ACTIVE="false"
+        export __LOCALHISTORY_RECENTLY_UPDATED="true"
+        echo "Disabled local history"
+        lht file
+        return 0
+    fi
+    if [ "$1" = "create" ]; then
+        touch "$__LOCALHISTORY_FILENAME"
+        if [ "$2" = "git" ]; then
+            echo "$__LOCALHISTORY_FILENAME" >> .gitignore
+        fi
+        __localhistory .
+        lht file
+        return 0
+    fi
+    if [ "$1" = "delete" ]; then
+        if [ "$__LOCALHISTORY_ACTIVE" == "true" ]; then
+            if [ "$HISTFILE" == "$__LOCALHISTORY_DEFAULT" ]; then 
+                echo "Local history file seems to be the same as the default file; not deleting"
+                lht file
+                return 2
+            fi;
+            history -c
+            rm $HISTFILE
+            HISTFILE="$__LOCALHISTORY_DEFAULT"
+            __localhistory .
+            lht file
+            return 0
+        fi;
+        echo "Local history file doesn't exist"
+        lht file
+        return 1
+    fi
+    if [ "$1" = "prompt_status" ]; then
+        if [ "$__LOCALHISTORY_RECENTLY_UPDATED" = "true" ]; then
+            echo "$3$HISTFILE$4"
+        fi
+        return 0
+    fi
+    if [ "$1" = "help" ]; then
+        echo "lht: Local History Tool"
+        echo ""
+        echo "status"
+        echo "\tShows if local history is enabled, active, and the current history file"
+        echo "file"
+        echo "\tShows the current history file"
+        echo "enable"
+        echo "on"
+        echo "\tEnables local history"
+        echo "disable"
+        echo "off"
+        echo "\tDisables local history"
+        echo "create [git]"
+        echo "Creates a local history file and optionally adds it to .git/info/exclude"
+        echo "prompt_status [symbol] [path_prefix] [path_suffix]"
+        echo "\tShows [symbol] if active, the new history file path surrounded by [path_prefix] and [path_suffix] if recently updated"
+        return 0
+    fi
+
+    echo "Unknown subcommand; run \"lht help\""
+    return 4
 }
