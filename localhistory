@@ -1,0 +1,57 @@
+# Local history per project
+# Default history file
+export __LOCALHISTORY_DEFAULT="$HOME/.bash_history"
+# Current history file
+export __LOCALHISTORY="$__LOCALHISTORY_DEFAULT"
+# Variable displaying path of new history file after changing directory or updating file
+export __LOCALHISTORY_DISPLAY_PATH=""
+# Symbol shown if the local history is active
+export __LOCALHISTORY_ACTIVE=""
+# Status that is displayed
+export __LOCALHISTORY_STATUS=""
+# Find history file
+__localhistory() {
+    local __LOCALHISTORY_TRAVERSAL="$(__localhistory_realpath "$1")"
+    # Is there a writable bash history file here?
+    if [ -w "$(__localhistory_realpath "$__LOCALHISTORY_TRAVERSAL/.local_bash_history")" ]; then
+        # Only set and display if new history file is found
+        __localhistory_update "$__LOCALHISTORY_TRAVERSAL/.local_bash_history"
+    elif [ "$__LOCALHISTORY_TRAVERSAL" != "/" ]; then
+        # Try traversing up to look again if we aren't already in root
+        __localhistory "$__LOCALHISTORY_TRAVERSAL/.."
+    else
+        # Fallback to home directory
+        __localhistory_update "$__LOCALHISTORY_DEFAULT"
+    fi
+}
+# Update the history file
+__localhistory_update() {
+    # $1 is the file
+    if [ "$__LOCALHISTORY" != "$(__localhistory_realpath "$1")" ]; then
+        # Write last history file
+        history -a
+        # Clear loaded history so history can be replaced
+        history -c
+        __LOCALHISTORY="$(__localhistory_realpath "$1")"
+        HISTFILE="$__LOCALHISTORY"
+        export __LOCALHISTORY_DISPLAY_PATH="$1 "
+        # Read history
+        history -r;
+    else
+        export __LOCALHISTORY_DISPLAY_PATH=""
+    fi
+    # Active symbol
+    if [ "$__LOCALHISTORY" != "$__LOCALHISTORY_DEFAULT" ]; then
+        export __LOCALHISTORY_ACTIVE="% "
+    fi
+    # Disable active symbol if path shown
+    if [ "$__LOCALHISTORY_DISPLAY_PATH" != "" ]; then
+        export __LOCALHISTORY_ACTIVE=""
+    fi
+    # Combination of those
+    export __LOCALHISTORY_STATUS="$__LOCALHISTORY_DISPLAY_PATH$__LOCALHISTORY_ACTIVE"
+}
+# Used for paths with spaces in name
+__localhistory_realpath() {
+    realpath "$@"
+}
