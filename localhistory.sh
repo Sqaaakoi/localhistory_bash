@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Local history for Bash
-# Version 1.1
+# Version 1.2
+# Use `lht help` for help and more information
 
-# Copyright © 2023 Sqaaakoi
+# Copyright (c) 2023 Sqaaakoi
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -92,30 +93,37 @@ __localhistory_realpath() {
 lht() {
     if [ "$1" = "status" ] || [ -z "$1" ]; then
         if [ "$__LOCALHISTORY_ENABLED" == "false" ]; then
-            echo "Local history is disabled"
+            echo -e "\033[96mLocal history is \033[36smdisabled\033[00m"
+            lht filename
             lht file
             return 2
         else
             if [ "$__LOCALHISTORY_ACTIVE" = "false" ]; then
-                echo "Local history is inactive"
+                echo -e "\033[96mLocal history is \033[90minactive\033[00m"
+                lht filename
                 lht file
                 return 1
             else 
-                echo "Local history is active"
+                echo -e "\033[96mLocal history is \033[92mactive\033[00m"
+                lht filename
                 lht file
                 return 0
             fi
         fi
     fi
+    if [ "$1" = "filename" ]; then
+        echo -e "\033[96mLocal history filename: \033[94m$__LOCALHISTORY_FILENAME\033[94m"
+        return 0
+    fi
     if [ "$1" = "file" ]; then
-        echo "History file" "$HISTFILE"
+        echo -e "\033[96mHistory file: \033[94m$HISTFILE\033[00m"
         return 0
     fi
     if [ "$1" = "enable" ] || [ "$1" = "on" ]; then
         export __LOCALHISTORY_ENABLED="true"
         __localhistory .
         export __LOCALHISTORY_RECENTLY_UPDATED="false"
-        echo "Enabled local history"
+        echo -e "\033[92mEnabled\033[96m local history\033[00m"
         lht file
         return 0
     fi
@@ -123,14 +131,14 @@ lht() {
         export __LOCALHISTORY_ENABLED="false"
         export __LOCALHISTORY_ACTIVE="false"
         export __LOCALHISTORY_RECENTLY_UPDATED="true"
-        echo "Disabled local history"
+        echo -e "\033[91mDisabled\033[96m local history\033[00m"
         lht file
         return 0
     fi
     if [ "$1" = "create" ]; then
         touch "$__LOCALHISTORY_FILENAME"
         if [ "$2" = "git" ]; then
-            echo "$__LOCALHISTORY_FILENAME" >> .gitignore
+            echo -e "$__LOCALHISTORY_FILENAME" >> .gitignore
         fi
         __localhistory .
         lht file
@@ -139,7 +147,7 @@ lht() {
     if [ "$1" = "delete" ]; then
         if [ "$__LOCALHISTORY_ACTIVE" == "true" ]; then
             if [ "$HISTFILE" == "$__LOCALHISTORY_DEFAULT" ]; then 
-                echo "Local history file seems to be the same as the default file; not deleting"
+                echo -e "\033[33mLocal history file seems to be the same as the default file; not deleting\033[00m"
                 lht file
                 return 2
             fi;
@@ -150,52 +158,52 @@ lht() {
             lht file
             return 0
         fi;
-        echo "Local history file doesn't exist"
+        echo -e "\033[31mLocal history file doesn't exist\033[00m"
         lht file
         return 1
     fi
     if [ "$1" = "prompt_status" ]; then
         if [ "$__LOCALHISTORY_RECENTLY_UPDATED" = "true" ]; then
-            echo "$5$HISTFILE$6"
+            echo -e "$5$HISTFILE$6"
             return 0
         fi
         if [ "$__LOCALHISTORY_ENABLED" = "true" ]; then
             if [ "$__LOCALHISTORY_ACTIVE" = "true" ]; then
-                echo "$2"
+                echo -e "$2"
                 return 0
             fi
-            echo "$3"
+            echo -e "$3"
             return 0
         fi
-        echo "$4"
+        echo -e "$4"
         return 0
     fi
     if [ "$1" = "help" ]; then
         echo -e "\033[96mlht: Local History Tool\033[00m"
         echo -e ""
-        echo -e "\033[36mlocal history filename: \033[00m\033[94m$__LOCALHISTORY_FILENAME\033[00m"
-        echo -e ""
-        echo -e "\033[39mlht\033[00m"
-        echo -e "\033[39mlht status\033[00m"
+        echo -e "\033[36mlht\033[00m"
+        echo -e "\033[36mlht status\033[00m"
         echo -e "\033[37m - Shows if local history is enabled, active, and the current history file\033[00m"
-        echo -e "\033[39mlht file\033[00m"
+        echo -e "\033[36mlht filename\033[00m"
+        echo -e "\033[37m - Shows the name of the local history file\033[00m"
+        echo -e "\033[36mlht file\033[00m"
         echo -e "\033[37m - Shows the current history file\033[00m"
-        echo -e "\033[39mlht enable\033[00m"
-        echo -e "\033[39mlht on\033[00m"
+        echo -e "\033[36mlht enable\033[00m"
+        echo -e "\033[36mlht on\033[00m"
         echo -e "\033[37m - Enables local history\033[00m"
-        echo -e "\033[39mlht disable\033[00m"
-        echo -e "\033[39mlht off\033[00m"
+        echo -e "\033[36mlht disable\033[00m"
+        echo -e "\033[36mlht off\033[00m"
         echo -e "\033[37m - Disables local history\033[00m"
-        echo -e "\033[39mlht create (git|gitlocal)\033[00m"
+        echo -e "\033[36mlht create (git|gitlocal)\033[00m"
         echo -e "\033[37m - Creates a local history file and optionally adds it to .gitignore (git) or .git/info/exclude (gitlocal)\033[00m"
-        echo -e "\033[39mlht prompt_status [active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
+        echo -e "\033[36mlht prompt_status [active] [inactive] [disabled] [path_prefix] [path_suffix]\033[00m"
         echo -e "\033[37m - Shows [active] if enabled and active, [inactive] if local history is enabled and inactive, [disabled] if local history is disabled, and the new history file path surrounded by [path_prefix] and [path_suffix] if active and recently updated\033[00m"
-        echo -e "\033[39mlht help\033[00m"
-        echo -e "\033[39mlht --help\033[00m"
+        echo -e "\033[36mlht help\033[00m"
+        echo -e "\033[36mlht --help\033[00m"
         echo -e "\033[37m - Shows this help message\033[00m"
         return 0
     fi
 
-    echo "Unknown subcommand; run \"lht help\""
+    echo -e "Unknown subcommand; run \"lht help\""
     return 4
 }
